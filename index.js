@@ -103,6 +103,7 @@ export class GameRoom {
       body: [],
       score: 0,
       alive: true,
+      ready: false,
       boost: false,
       ability: "",
       abilityUntil: 0,
@@ -159,7 +160,12 @@ export class GameRoom {
         }
       }
     }
-
+    if (data.type === "ready") {
+      p.ready = !!data.value;
+      await this.saveGameState();
+      this.broadcast();
+      return;
+    }
     if (data.type === "boost") {
       p.boost = !!data.value;
     }
