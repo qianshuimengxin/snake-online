@@ -36,6 +36,7 @@ export class GameRoom {
     this.started = false;
     this.lastBigFood = 0;
     this.lastSavedAt = 0;
+    this.lastTickAt = 0;
     this.ctx.blockConcurrencyWhile(async () => {
       const saved = await this.ctx.storage.get("gameState");
 
@@ -212,17 +213,12 @@ export class GameRoom {
   }
 
   async scheduleTick() {
-    if (this.players.size > 0) {
-      await this.ctx.storage.setAlarm(Date.now() + 120);
-    }
+    // 不再使用高频 Alarm
   }
 
   async alarm() {
-    await this.tick();
-
-    if (this.players.size > 0) {
-      await this.scheduleTick();
-    }
+    // 暂时不再使用高频 Alarm
+    // 游戏循环后续改由玩家心跳驱动
   }
   spawnFood() {
     this.food.push({
