@@ -25,6 +25,7 @@ export default {
 };
 
 export class GameRoom {
+  
   constructor(ctx, env) {
     this.ctx = ctx;
     this.env = env;
@@ -34,8 +35,35 @@ export class GameRoom {
     this.bigFood = null;
     this.started = false;
     this.lastBigFood = 0;
+    this.lastSavedAt = 0;
+    this.ctx.blockConcurrencyWhile(async () => {
+      const saved = await this.ctx.storage.get("gameState");
+
+      if (saved) {
+        this.players = new Map(saved.players || []);
+        this.food = saved.food || [];
+        this.orbs = saved.orbs || [];
+        this.bigFood = saved.bigFood || null;
+        this.started = saved.started || false;
+        this.lastBigFood = saved.lastBigFood || 0;
+      }
+    });
   }
-    async fetch(request) {
+
+
+  async saveGameState() {
+    await this.ctx.storage.put("gameState", {
+      players: Array.from(this.players.entries()),
+      food: this.food,
+      orbs: this.orbs,
+      bigFood: this.bigFood,
+      started: this.started,
+      lastBigFood: this.lastBigFood
+    });
+  }
+
+  async fetch(request) {
+
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("WebSocket required", { status: 426 });
     }
@@ -96,7 +124,7 @@ export class GameRoom {
         this.spawnFood();
       }
     }
-
+    await this.saveGameState();
     this.broadcast();
     await this.scheduleTick();
 
@@ -105,7 +133,7 @@ export class GameRoom {
       webSocket: client
     });
     }
-    webSocketMessage(ws, message) {
+    async webSocketMessage(ws, message) {
     let data;
 
     try {
@@ -149,6 +177,8 @@ export class GameRoom {
         value: 2,
         color: p.color
       });
+
+      await this.saveGameState();
     }
 
     if (data.type === "wow" && Date.now() > p.cooldown) {
@@ -166,18 +196,19 @@ export class GameRoom {
     }
   }
 
-  webSocketClose(ws) {
+  async webSocketClose(ws) {
     const a = ws.deserializeAttachment();
 
     if (a) {
       this.players.delete(a.id);
+      await this.saveGameState();
     }
 
     this.broadcast();
   }
 
-  webSocketError(ws) {
-    this.webSocketClose(ws);
+  async webSocketError(ws) {
+    await this.webSocketClose(ws);
   }
 
   async scheduleTick() {
@@ -187,20 +218,20 @@ export class GameRoom {
   }
 
   async alarm() {
-    this.tick();
+    await this.tick();
 
     if (this.players.size > 0) {
       await this.scheduleTick();
     }
   }
-    spawnFood() {
+  spawnFood() {
     this.food.push({
       x: 20 + Math.random() * 760,
       y: 20 + Math.random() * 460
     });
   }
 
-  tick() {
+  async tick() {
     const now = Date.now();
 
     if (this.players.size >= 2) {
@@ -257,7 +288,7 @@ export class GameRoom {
       }
 
       if (!p.alive) continue;
-            for (const other of this.players.values()) {
+      for (const other of this.players.values()) {
         if (other.id === p.id || !other.alive) continue;
 
         for (const b of other.body) {
@@ -339,6 +370,13 @@ export class GameRoom {
 
     if (this.orbs.length > 50) {
       this.orbs.splice(0, this.orbs.length - 50);
+    }
+
+    const saveNow = Date.now();
+
+    if (saveNow - this.lastSavedAt >= 5000) {
+      this.lastSavedAt = saveNow;
+      await this.saveGameState();
     }
 
     this.broadcast();
