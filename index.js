@@ -163,12 +163,27 @@ export class GameRoom {
         }
       }
     }
-    if (data.type === "ready") {
-      p.ready = !!data.value;
-      await this.saveGameState();
-      this.broadcast();
-      return;
+if (data.type === "ready") {
+  p.ready = !!data.value;
+
+  if (!this.started) {
+    const allReady =
+      this.players.size >= 2 &&
+      Array.from(this.players.values()).every(player => player.ready);
+
+    if (allReady && !this.countdownUntil) {
+      this.countdownUntil = Date.now() + 5000;
     }
+
+    if (!allReady) {
+      this.countdownUntil = 0;
+    }
+  }
+
+  await this.saveGameState();
+  this.broadcast();
+  return;
+}
     if (data.type === "boost") {
       p.boost = !!data.value;
     }
@@ -238,10 +253,6 @@ export class GameRoom {
 
   async tick() {
     const now = Date.now();
-
-    if (this.players.size >= 2) {
-      this.started = true;
-    }
 
     if (
       !this.bigFood &&
