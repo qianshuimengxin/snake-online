@@ -530,9 +530,10 @@ button:active {
   <button onclick="joinRoom()">加入房间</button>
 
   <div id="status">创建房间或输入朋友给你的房间号</div>
+  <div id="lobby"></div>
+  <button id="readyBtn" onclick="toggleReady()">准备</button>
   <div id="scores"></div>
   <div id="notice"></div>
-
   <canvas id="game" width="800" height="500"></canvas>
 
   <div class="controls">
@@ -564,7 +565,19 @@ let ws = null;
 let roomCode = "";
 let myId = "";
 let latest = null;
+let isReady = false;
 
+function toggleReady() {
+  isReady = !isReady;
+
+  send({
+    type: "ready",
+    value: isReady
+  });
+
+  document.getElementById("readyBtn").textContent =
+    isReady ? "取消准备" : "准备";
+}
 function createRoom() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
@@ -622,7 +635,11 @@ function connect(code) {
 
     if (data.type === "state") {
       latest = data;
-
+      document.getElementById("lobby").textContent =
+        "房间玩家：" +
+        data.players.map(p =>
+          p.name + "（" + (p.ready ? "已准备" : "未准备") + "）"
+        ).join("　 |　 ");
       if (data.notice && data.notice.type === "wow") {
         document.getElementById("notice").textContent =
           data.notice.player + "：碉堡了！";
