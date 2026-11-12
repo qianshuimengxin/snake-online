@@ -253,7 +253,17 @@ if (data.type === "ready") {
 
   async tick() {
     const now = Date.now();
-
+if (!this.started && this.countdownUntil > 0) {
+  if (now >= this.countdownUntil) {
+    this.started = true;
+    this.countdownUntil = 0;
+  } else {
+    return;
+  }
+}
+    if (!this.started) {
+  return;
+    }
     if (
       !this.bigFood &&
       now - this.lastBigFood > 18000 &&
