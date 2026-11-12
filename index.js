@@ -631,6 +631,7 @@ function joinRoom() {
 }
 
 function connect(code) {
+let pulseTimer = null;
   if (ws) ws.close();
 
   roomCode = code;
@@ -650,10 +651,14 @@ function connect(code) {
   document.getElementById("status").textContent =
     "正在连接房间 " + code + "……";
 
-  ws.onopen = () => {
-    document.getElementById("status").textContent =
-      "已连接！房间号：" + code + "，把房间号发给朋友吧";
-  };
+ws.onopen = () => {
+  document.getElementById("status").textContent =
+    "已连接！房间号：" + code + "，把房间号发给朋友吧";
+
+pulseTimer = setInterval(() => {
+  send({ type: "pulse" });
+}, 50);
+};
     ws.onmessage = e => {
     const data = JSON.parse(e.data);
 
@@ -682,10 +687,12 @@ function connect(code) {
     }
   };
 
-  ws.onclose = () => {
-    document.getElementById("status").textContent =
-      "连接已断开，请重新加入";
-  };
+ws.onclose = () => {
+  clearInterval(pulseTimer);
+
+  document.getElementById("status").textContent =
+    "连接已断开，请重新加入";
+};
 }
 
 function send(data) {
