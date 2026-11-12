@@ -123,7 +123,9 @@ export class GameRoom {
     server.serializeAttachment({ id });
     this.ctx.acceptWebSocket(server);
     this.players.set(id, player);
-
+if (!this.started) {
+  this.countdownUntil = 0;
+}
     if (this.food.length === 0) {
       for (let i = 0; i < 20; i++) {
         this.spawnFood();
