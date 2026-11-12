@@ -395,6 +395,7 @@ export class GameRoom {
         body: p.body,
         score: Math.floor(p.score),
         alive: p.alive,
+        ready: p.ready,
         ability: p.ability
       })),
 
