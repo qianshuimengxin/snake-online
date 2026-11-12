@@ -216,9 +216,14 @@ if (data.type === "ready") {
       });
     }
 
-    if (data.type === "pulse") {
-      this.broadcast();
-    }
+if (data.type === "pulse") {
+  const now = Date.now();
+
+  if (now - this.lastTickAt >= 50) {
+    this.lastTickAt = now;
+    await this.tick();
+  }
+}
   }
 
   async webSocketClose(ws) {
