@@ -231,10 +231,23 @@ if (data.type === "pulse") {
   async webSocketClose(ws) {
     const a = ws.deserializeAttachment();
 
-    if (a) {
-      this.players.delete(a.id);
-      await this.saveGameState();
+if (a) {
+  this.players.delete(a.id);
+
+  if (!this.started) {
+    const allReady =
+      this.players.size >= 2 &&
+      Array.from(this.players.values()).every(player => player.ready);
+
+    if (allReady) {
+      this.countdownUntil = Date.now() + 5000;
+    } else {
+      this.countdownUntil = 0;
     }
+  }
+
+  await this.saveGameState();
+}
 
     this.broadcast();
   }
