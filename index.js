@@ -610,7 +610,29 @@ let roomCode = "";
 let myId = "";
 let latest = null;
 let isReady = false;
+function updateCountdown() {
+  if (!ws || ws.readyState !== 1 || !latest) return;
 
+  const status = document.getElementById("status");
+
+  if (latest.started) {
+    status.textContent = "游戏进行中";
+    return;
+  }
+
+  if (latest.countdownUntil > 0) {
+    const seconds = Math.max(
+      1,
+      Math.ceil((latest.countdownUntil - Date.now()) / 1000)
+    );
+
+    status.textContent = "全员已准备，" + seconds + "秒后开始游戏";
+  } else {
+    status.textContent = "等待其他玩家加入或准备……至少2人即可开始";
+  }
+}
+
+setInterval(updateCountdown, 250);
 function toggleReady() {
   isReady = !isReady;
 
@@ -840,11 +862,6 @@ function draw() {
       p.name + "：" + p.score +
       (p.alive ? "" : "（淘汰）")
     ).join("　 |　 ");
-
-  if (!latest.started) {
-    document.getElementById("status").textContent =
-      "等待其他玩家加入……至少2人即可开始";
-  }
 }
 </script>
 </body>
