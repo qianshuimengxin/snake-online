@@ -34,6 +34,7 @@ export class GameRoom {
     this.orbs = [];
     this.bigFood = null;
     this.started = false;
+    this.countdownUntil = 0;
     this.lastBigFood = 0;
     this.lastSavedAt = 0;
     this.lastTickAt = 0;
@@ -46,6 +47,7 @@ export class GameRoom {
         this.orbs = saved.orbs || [];
         this.bigFood = saved.bigFood || null;
         this.started = saved.started || false;
+        this.countdownUntil = saved.countdownUntil || 0;
         this.lastBigFood = saved.lastBigFood || 0;
       }
     });
@@ -59,6 +61,7 @@ export class GameRoom {
       orbs: this.orbs,
       bigFood: this.bigFood,
       started: this.started,
+      countdownUntil: this.countdownUntil,
       lastBigFood: this.lastBigFood
     });
   }
@@ -387,7 +390,7 @@ export class GameRoom {
     const state = {
       type: "state",
       started: this.started,
-
+      countdownUntil: this.countdownUntil,
       players: Array.from(this.players.values()).map(p => ({
         id: p.id,
         name: p.name,
